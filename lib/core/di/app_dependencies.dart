@@ -6,6 +6,9 @@ import '../network/sse/sse_client.dart';
 import '../network/ws/ws_client.dart';
 import '../router/app_router.dart';
 import '../storage/session_storage.dart';
+import '../../features/alerts/data/repositories/alerts_repository_impl.dart';
+import '../../features/alerts/domain/repositories/alerts_repository.dart';
+import '../../features/alerts/presentation/bloc/global_sos_cubit.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/presentation/bloc/auth_cubit.dart';
@@ -38,8 +41,10 @@ class AppDependencies {
   final DashboardRepository dashboardRepository;
   final TripsRepository tripsRepository;
   final MapRepository mapRepository;
+  final AlertsRepository alertsRepository;
   final AuthCubit authCubit;
   final HealthCubit healthCubit;
+  final GlobalSosCubit globalSosCubit;
   final AppRouter appRouter;
 
   const AppDependencies({
@@ -53,8 +58,10 @@ class AppDependencies {
     required this.dashboardRepository,
     required this.tripsRepository,
     required this.mapRepository,
+    required this.alertsRepository,
     required this.authCubit,
     required this.healthCubit,
+    required this.globalSosCubit,
     required this.appRouter,
   });
 
@@ -109,6 +116,10 @@ class AppDependencies {
       wsClient: wsClient,
       restClient: restClient,
     );
+    final alertsRepository = AlertsRepositoryImpl(
+      restClient: restClient,
+      sseClient: sseClient,
+    );
 
     // 5. ViewModels
     final authCubit = AuthCubit(
@@ -117,14 +128,18 @@ class AppDependencies {
     );
     eventBus.attachAuthCubit(authCubit);
 
+    final globalSosCubit = GlobalSosCubit(repository: alertsRepository);
+
     // Clean up or connect SSE & WebSocket when auth state changes (Requirements M1.3 & M5)
     authCubit.stream.listen((state) {
       if (state is Authenticated) {
         sseClient.connect(state.token);
         wsClient.connect(state.token);
+        globalSosCubit.start();
       } else if (state is Unauthenticated) {
         sseClient.disconnect();
         wsClient.disconnect();
+        globalSosCubit.stop();
       }
     });
 
@@ -148,8 +163,10 @@ class AppDependencies {
       dashboardRepository: dashboardRepository,
       tripsRepository: tripsRepository,
       mapRepository: mapRepository,
+      alertsRepository: alertsRepository,
       authCubit: authCubit,
       healthCubit: healthCubit,
+      globalSosCubit: globalSosCubit,
       appRouter: appRouter,
     );
   }
@@ -164,7 +181,10 @@ class _AppNetworkEventBus implements NetworkEventBus {
 
   @override
   void onUnauthorized(AppException exception) {
-    _authCubit?.handleUnauthorized();
+    // Only handle 401 if user was actively Authenticated (prevents bogus errors on logout or fresh visit)
+    if (_authCubit?.state is Authenticated) {
+      _authCubit?.handleUnauthorized();
+    }
   }
 
   @override

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'core/di/app_dependencies.dart';
 import 'core/theme/app_theme.dart';
+import 'features/alerts/domain/repositories/alerts_repository.dart';
+import 'features/alerts/presentation/bloc/global_sos_cubit.dart';
 import 'features/auth/domain/repositories/auth_repository.dart';
 import 'features/auth/presentation/bloc/auth_cubit.dart';
 import 'features/dashboard/domain/repositories/dashboard_repository.dart';
@@ -28,11 +30,13 @@ class BadrgoOpsApp extends StatelessWidget {
         RepositoryProvider<DashboardRepository>.value(value: dependencies.dashboardRepository),
         RepositoryProvider<TripsRepository>.value(value: dependencies.tripsRepository),
         RepositoryProvider<MapRepository>.value(value: dependencies.mapRepository),
+        RepositoryProvider<AlertsRepository>.value(value: dependencies.alertsRepository),
       ],
       child: MultiBlocProvider(
         providers: [
           BlocProvider<AuthCubit>.value(value: dependencies.authCubit),
           BlocProvider<HealthCubit>.value(value: dependencies.healthCubit),
+          BlocProvider<GlobalSosCubit>.value(value: dependencies.globalSosCubit),
         ],
         child: MaterialApp.router(
           title: 'badrgo Ops Console — Clean MVVM',

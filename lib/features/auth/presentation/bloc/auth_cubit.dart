@@ -24,8 +24,15 @@ class AuthCubit extends Cubit<AuthState> {
     final cachedToken = _sessionStorage.getToken();
     final cachedUser = _sessionStorage.getUser();
 
+    // If no token exists, the user is simply visiting for the first time.
+    // Cleanly transition to Unauthenticated without any 401 error message.
+    if (cachedToken == null || cachedToken.isEmpty) {
+      emit(const Unauthenticated());
+      return;
+    }
+
     // Instant optimistic render from localStorage to prevent screen flicker
-    if (cachedToken != null && cachedUser != null) {
+    if (cachedUser != null) {
       emit(Authenticated(user: cachedUser, token: cachedToken));
     } else {
       emit(const AuthLoading());
@@ -40,7 +47,7 @@ class AuthCubit extends Cubit<AuthState> {
       failure: (exception) {
         if (exception.statusCode == 401) {
           handleUnauthorized();
-        } else if (cachedToken == null) {
+        } else if (cachedUser == null) {
           emit(const Unauthenticated());
         }
       },
@@ -74,6 +81,7 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> logout() async {
     emit(const AuthLoading());
     await _authRepository.logout();
+    _sessionStorage.clear();
     emit(const Unauthenticated());
   }
 

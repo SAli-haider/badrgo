@@ -6,6 +6,7 @@ import '../../../../core/widgets/ops_badge.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
+import 'global_sos_banner.dart';
 import '../../domain/entities/nav_item.dart';
 
 /// Role-aware app shell layout adhering strictly to M2 requirements:
@@ -51,6 +52,7 @@ class ShellScaffold extends StatelessWidget {
                 child: Column(
                   children: [
                     _buildTopHeader(context, user),
+                    const GlobalSosBanner(),
                     Expanded(child: child),
                   ],
                 ),
