@@ -7,6 +7,7 @@ import 'features/auth/presentation/bloc/auth_cubit.dart';
 import 'features/dashboard/domain/repositories/dashboard_repository.dart';
 import 'features/health/domain/repositories/health_repository.dart';
 import 'features/health/presentation/bloc/health_cubit.dart';
+import 'features/map/domain/repositories/map_repository.dart';
 import 'features/trips/domain/repositories/trips_repository.dart';
 
 /// Root Application Widget.
@@ -26,6 +27,7 @@ class BadrgoOpsApp extends StatelessWidget {
         RepositoryProvider<HealthRepository>.value(value: dependencies.healthRepository),
         RepositoryProvider<DashboardRepository>.value(value: dependencies.dashboardRepository),
         RepositoryProvider<TripsRepository>.value(value: dependencies.tripsRepository),
+        RepositoryProvider<MapRepository>.value(value: dependencies.mapRepository),
       ],
       child: MultiBlocProvider(
         providers: [

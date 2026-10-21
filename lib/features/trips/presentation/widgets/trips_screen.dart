@@ -356,70 +356,76 @@ class _TripsViewState extends State<_TripsView> {
           ),
 
           // Date Range Picker Button
-          InkWell(
-            onTap: () async {
-              final range = await showDateRangePicker(
-                context: context,
-                firstDate: DateTime(2025),
-                lastDate: DateTime.now().add(const Duration(days: 1)),
-                initialDateRange: _selectedDateRange,
-                builder: (context, child) {
-                  return Theme(
-                    data: ThemeData.dark().copyWith(
-                      colorScheme: const ColorScheme.dark(
-                        primary: AppColors.primary,
-                        surface: AppColors.surface,
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () async {
+                final range = await showDateRangePicker(
+                  context: context,
+                  firstDate: DateTime(2025),
+                  lastDate: DateTime.now().add(const Duration(days: 1)),
+                  initialDateRange: _selectedDateRange,
+                  builder: (context, child) {
+                    return Theme(
+                      data: ThemeData.dark().copyWith(
+                        colorScheme: const ColorScheme.dark(
+                          primary: AppColors.primary,
+                          surface: AppColors.surface,
+                        ),
+                      ),
+                      child: child!,
+                    );
+                  },
+                );
+                if (range != null) {
+                  setState(() => _selectedDateRange = range);
+                  if (context.mounted) _applyFilters(context);
+                }
+              },
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                height: 38,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: _selectedDateRange != null ? AppColors.primary : AppColors.border,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.date_range,
+                      size: 16,
+                      color: _selectedDateRange != null ? AppColors.primary : AppColors.textSecondary,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      _selectedDateRange != null
+                          ? '${_selectedDateRange!.start.month}/${_selectedDateRange!.start.day} - ${_selectedDateRange!.end.month}/${_selectedDateRange!.end.day}'
+                          : 'Date Range',
+                      style: TextStyle(
+                        color: _selectedDateRange != null ? AppColors.textPrimary : AppColors.textSecondary,
+                        fontSize: 12,
                       ),
                     ),
-                    child: child!,
-                  );
-                },
-              );
-              if (range != null) {
-                setState(() => _selectedDateRange = range);
-                if (context.mounted) _applyFilters(context);
-              }
-            },
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              height: 38,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: _selectedDateRange != null ? AppColors.primary : AppColors.border,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.date_range,
-                    size: 16,
-                    color: _selectedDateRange != null ? AppColors.primary : AppColors.textSecondary,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _selectedDateRange != null
-                        ? '${_selectedDateRange!.start.month}/${_selectedDateRange!.start.day} - ${_selectedDateRange!.end.month}/${_selectedDateRange!.end.day}'
-                        : 'Date Range',
-                    style: TextStyle(
-                      color: _selectedDateRange != null ? AppColors.textPrimary : AppColors.textSecondary,
-                      fontSize: 12,
-                    ),
-                  ),
-                  if (_selectedDateRange != null) ...[
-                    const SizedBox(width: 6),
-                    InkWell(
-                      onTap: () {
-                        setState(() => _selectedDateRange = null);
-                        _applyFilters(context);
-                      },
-                      child: const Icon(Icons.close, size: 14, color: AppColors.textSecondary),
-                    ),
+                    if (_selectedDateRange != null) ...[
+                      const SizedBox(width: 6),
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            setState(() => _selectedDateRange = null);
+                            _applyFilters(context);
+                          },
+                          child: const Icon(Icons.close, size: 14, color: AppColors.textSecondary),
+                        ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),

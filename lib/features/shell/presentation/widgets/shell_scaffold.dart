@@ -26,7 +26,10 @@ class ShellScaffold extends StatelessWidget {
     return BlocBuilder<AuthCubit, AuthState>(
       builder: (context, state) {
         if (state is! Authenticated) {
-          return child;
+          return const Scaffold(
+            backgroundColor: AppColors.background,
+            body: SizedBox.shrink(),
+          );
         }
 
         final user = state.user;

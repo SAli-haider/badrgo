@@ -3,6 +3,7 @@ import '../network/graphql_client.dart';
 import '../network/network_event_bus.dart';
 import '../network/rest_client.dart';
 import '../network/sse/sse_client.dart';
+import '../network/ws/ws_client.dart';
 import '../router/app_router.dart';
 import '../storage/session_storage.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
@@ -14,13 +15,15 @@ import '../../features/dashboard/domain/repositories/dashboard_repository.dart';
 import '../../features/health/data/repositories/health_repository_impl.dart';
 import '../../features/health/domain/repositories/health_repository.dart';
 import '../../features/health/presentation/bloc/health_cubit.dart';
+import '../../features/map/data/repositories/map_repository_impl.dart';
+import '../../features/map/domain/repositories/map_repository.dart';
 import '../../features/trips/data/repositories/trips_repository_impl.dart';
 import '../../features/trips/domain/repositories/trips_repository.dart';
 
 /// Clean Composition Root & Dependency Container.
 ///
 /// Encapsulates initialization of:
-/// - Core storage and transports (Dio REST, GraphQL, SSE, Event Bus)
+/// - Core storage and transports (Dio REST, GraphQL, SSE, WebSocket, Event Bus)
 /// - Repositories (Data Layer)
 /// - ViewModels (BLoC / Cubit)
 /// - AppRouter (RBAC Route Guards)
@@ -29,10 +32,12 @@ class AppDependencies {
   final RestClient restClient;
   final GraphQLClient graphQLClient;
   final SseClient sseClient;
+  final WsClient wsClient;
   final AuthRepository authRepository;
   final HealthRepository healthRepository;
   final DashboardRepository dashboardRepository;
   final TripsRepository tripsRepository;
+  final MapRepository mapRepository;
   final AuthCubit authCubit;
   final HealthCubit healthCubit;
   final AppRouter appRouter;
@@ -42,10 +47,12 @@ class AppDependencies {
     required this.restClient,
     required this.graphQLClient,
     required this.sseClient,
+    required this.wsClient,
     required this.authRepository,
     required this.healthRepository,
     required this.dashboardRepository,
     required this.tripsRepository,
+    required this.mapRepository,
     required this.authCubit,
     required this.healthCubit,
     required this.appRouter,
@@ -77,6 +84,11 @@ class AppDependencies {
       sseClient.connect(savedToken);
     }
 
+    final wsClient = WsClient(eventBus: eventBus);
+    if (savedToken != null && savedToken.isNotEmpty) {
+      wsClient.connect(savedToken);
+    }
+
     // 4. Data Repositories
     final healthRepository = HealthRepositoryImpl(restClient: restClient);
     final authRepository = AuthRepositoryImpl(
@@ -93,6 +105,10 @@ class AppDependencies {
       restClient: restClient,
       sseClient: sseClient,
     );
+    final mapRepository = MapRepositoryImpl(
+      wsClient: wsClient,
+      restClient: restClient,
+    );
 
     // 5. ViewModels
     final authCubit = AuthCubit(
@@ -101,12 +117,14 @@ class AppDependencies {
     );
     eventBus.attachAuthCubit(authCubit);
 
-    // Clean up or connect SSE when auth state changes (Requirement M1.3)
+    // Clean up or connect SSE & WebSocket when auth state changes (Requirements M1.3 & M5)
     authCubit.stream.listen((state) {
       if (state is Authenticated) {
         sseClient.connect(state.token);
+        wsClient.connect(state.token);
       } else if (state is Unauthenticated) {
         sseClient.disconnect();
+        wsClient.disconnect();
       }
     });
 
@@ -124,10 +142,12 @@ class AppDependencies {
       restClient: restClient,
       graphQLClient: graphQLClient,
       sseClient: sseClient,
+      wsClient: wsClient,
       authRepository: authRepository,
       healthRepository: healthRepository,
       dashboardRepository: dashboardRepository,
       tripsRepository: tripsRepository,
+      mapRepository: mapRepository,
       authCubit: authCubit,
       healthCubit: healthCubit,
       appRouter: appRouter,
